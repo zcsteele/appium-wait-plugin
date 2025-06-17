@@ -40,28 +40,34 @@ export async function find(driver, args) {
     }
   };
   let spinner;
-  try {
-    spinner = ora(
-      `Waiting to find element with ${strategy} strategy for ${selector} selector`
-    ).start();
-    const element = await waitUntil(predicate, timeoutProp);
-    log.info(`Element with ${strategy} strategy for ${selector} selector found.`);
-    let elementViewState = await elementIsDisplayed(driver, element.value.ELEMENT);
-    if (elementViewState) log.info('Element is displayed!');
-    if (!elementViewState)
-      throw new errors.ElementNotVisibleError(
-        'Element was not displayed! Please make sure the element is in viewport to perform the action'
-      );
-    spinner.succeed();
-  } catch (e) {
-    if (e instanceof TimeoutError) {
-      spinner.fail();
-      throw new errors.NoSuchElementError(
+  let startSearch = Date.now();
+  spinner = ora(
+    `Waiting to find element with ${strategy} strategy for ${selector} selector`
+  ).start();
+  let match = false;
+  let finalError;
+  while ((Date.now() - startSearch) < timeoutProp.timeout && match === false) {
+    try {
+      const element = await waitUntil(predicate, timeoutProp);
+      let elementViewState = await elementIsDisplayed(driver, element.value.ELEMENT);
+      if (elementViewState) {
+        match = true;
+      } else {
+        finalError = new errors.ElementNotVisibleError(
+          'Element was not displayed! Please make sure the element is in viewport to perform the action'
+        );
+      }
+    } catch (e) {
+      finalError = new errors.NoSuchElementError(
         `Time out after waiting for element ${selector} for ${timeoutProp.timeout} ms`
       );
-    } else {
-      console.error(e);
     }
+  }
+  if (match === true) {
+    spinner.succeed();
+  } else {
+    spinner.fail();
+    throw finalError;
   }
 }
 

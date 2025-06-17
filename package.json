@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/saikrishna321/appium-wait-plugin.git"
+    "url": "git+https://github.com/zcsteele/appium-wait-plugin.git"
   },
   "contributors": [
     {
@@ -28,13 +28,17 @@
     {
       "name": "Srinivasan Sekar",
       "email": "srinivasan.sekar1990@gmail.com"
+    },
+    {
+      "name": "Zachary Steele",
+      "email": "zcsteele@gmail.com"
     }
   ],
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/saikrishna321/appium-wait-plugin/issues"
+    "url": "https://github.com/zcsteele/appium-wait-plugin/issues"
   },
-  "homepage": "https://github.com/saikrishna321/appium-wait-plugin#readme",
+  "homepage": "https://github.com/zcsteele/appium-wait-plugin#readme",
   "dependencies": {
     "async-wait-until": "^2.0.12",
     "axios": "0.27.2",
