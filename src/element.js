@@ -139,16 +139,20 @@ async function elementState(sessionInfo, strategy, selector, driver) {
       multiple: false,
     });
   }
-  const response = await axios.post(
-    `${sessionInfo.baseUrl}session/${sessionInfo.jwProxySession}/element`,
-    postBody,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-  return response.data;
+  try {
+    const response = await axios.post(
+      `${sessionInfo.baseUrl}session/${sessionInfo.jwProxySession}/element`,
+      postBody,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (e) {
+    return { value: { error: e.message } }
+  }
 }
 
 function _getPluginProperties(sessionId) {
