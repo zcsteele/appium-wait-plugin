@@ -1,8 +1,9 @@
 import { remote } from 'webdriverio';
 import { pluginE2EHarness } from '@appium/plugin-test-support';
 import path from 'path';
-var chai = require('chai'),
-  chaiAsPromised = require('chai-as-promised');
+import * as chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import fs from 'fs';
 
 chai.use(chaiAsPromised);
 // eslint-disable-next-line no-undef
@@ -321,5 +322,69 @@ describe('Set Timeout', () => {
       if (driver) await driver.deleteSession();
       if (server) await server.close();
     });
+  });
+});
+
+describe('Element-wait plugin with XCUITest driver', () => {
+  const WDIO_PARAMS_IOS = {
+    connectionRetryCount: 0,
+    hostname: APPIUM_HOST,
+    port: TEST_PORT,
+  };
+  const iosApp = path.join(__dirname, '.', 'build', 'vodqa.zip');
+  const iOSCaps = {
+    platformName: 'iOS',
+    'appium:automationName': 'XCUITest',
+    'platformName': 'iOS',
+    'appium:app': 'com.apple.mobilesafari',
+    'appium:wdaLaunchTimeout': 190000,
+  };
+
+  let driver;
+  pluginE2EHarness({
+    before,
+    after,
+    server,
+    serverArgs: { basePath: '/', logFile: 'appium-server.log' },
+    port: TEST_PORT,
+    host: TEST_HOST,
+    appiumHome: APPIUM_HOME,
+    driverName: 'xcuitest',
+    pluginName: 'element-wait',
+    pluginSource: 'local',
+    pluginSpec: '.',
+  });
+
+  beforeEach(async () => {
+    driver = await remote({ ...WDIO_PARAMS_IOS, capabilities: iOSCaps });
+  });
+
+  it('Logs a failure with ora when the element is not found', async () => {
+    const waitForErrorLog = new Promise((resolve) => {
+      // Monitor the appium log file for the error message generated when the plugin times out
+      const logFile = path.join(__dirname, '..', 'appium-server.log');
+      const watcher = fs.watch(logFile, (eventType, filename) => {
+        if (eventType === 'change' && filename) {
+          fs.readFile(logFile, 'utf8', (err, data) => {
+            // Default timeout is 10s, hardcoding this test case to expect defaults
+            if (data.includes('Time out after waiting for element notfound for 10000 ms')) {
+              watcher.close();
+              resolve('RESOLVED');
+            }
+          });
+        }
+      });
+    });
+    const elementWaitTimeout = new Promise((resolve) => {
+      setTimeout(() => resolve('TIMEOUT'), 13000);
+    });
+    const testQuery = driver.$('~notfound');
+    const result = await Promise.race([waitForErrorLog, elementWaitTimeout]);
+    expect(result).to.equal('RESOLVED');
+  });
+
+  afterEach(async () => {
+    await driver.deleteSession();
+    if (server) await server.close();
   });
 });
